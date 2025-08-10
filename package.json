@@ -1,0 +1,36 @@
+{
+  "name": "breeze-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npx turbo build",
+    "dev": "npx turbo dev",
+    "lint": "npx turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "npx turbo clean",
+    "type-check": "npx turbo type-check",
+    "main": "cd apps/main-app && npm run dev",
+    "car-wash": "npx turbo dev --filter=car-wash-app",
+    "restaurant": "npx turbo dev --filter=restaurant-app",
+    "dev:main": "cd apps/main-app && npm run dev",
+    "dev:car-wash": "cd apps/car-wash-app && npm run dev",
+    "dev:restaurant": "cd apps/restaurant-app && npm run dev"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.13.4",
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.1.1",
+    "@typescript-eslint/parser": "^7.1.1",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "turbo": "^2.0.3",
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "npm@10.2.4",
+  "engines": {
+    "node": ">=18.17.0"
+  }
+}
