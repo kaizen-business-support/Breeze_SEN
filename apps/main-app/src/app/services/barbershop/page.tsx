@@ -26,7 +26,7 @@ interface Service {
   description: string;
   price: number;
   duration: number;
-  category: 'cut' | 'beard' | 'treatment' | 'styling';
+  category: string; // Changed to string to match MenuManager
   popular?: boolean;
   image: string;
 }

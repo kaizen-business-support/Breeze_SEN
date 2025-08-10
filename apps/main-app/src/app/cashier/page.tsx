@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { trackCashierSale, addUserOrder, saveSaleRecord, SaleRecord } from '../../utils/statistics';
+import { MenuManager } from '../../utils/menuManager';
 import { 
   Car, 
   Utensils, 
@@ -87,60 +88,29 @@ interface Transaction {
   };
 }
 
-const services = [
-  {
-    id: 'car-wash',
-    name: 'Lavage Auto',
-    icon: Car,
-    color: 'bg-blue-600',
-    items: [
-      { id: 'basic', name: 'Lavage Basique', price: 5000, category: 'wash' },
-      { id: 'premium', name: 'Lavage Premium', price: 8000, category: 'wash' },
-      { id: 'deluxe', name: 'Lavage Deluxe', price: 12000, category: 'wash' },
-      { id: 'wax', name: 'Cire Protection', price: 3000, category: 'extra' },
-      { id: 'interior', name: 'Nettoyage Intérieur', price: 4000, category: 'extra' }
-    ]
-  },
-  {
-    id: 'restaurant',
-    name: 'Restaurant',
-    icon: Utensils,
-    color: 'bg-amber-600',
-    items: [
-      { id: 'thieb', name: 'Thiéboudienne Royal', price: 15000, category: 'main' },
-      { id: 'yassa', name: 'Yassa Poulet', price: 12000, category: 'main' },
-      { id: 'mafe', name: 'Mafé Agneau', price: 14000, category: 'main' },
-      { id: 'bissap', name: 'Jus de Bissap', price: 2500, category: 'drink' },
-      { id: 'attaya', name: 'Thé Attaya', price: 1500, category: 'drink' }
-    ]
-  },
-  {
-    id: 'fast-food',
-    name: 'Fast Food',
-    icon: Coffee,
-    color: 'bg-orange-600',
-    items: [
-      { id: 'burger', name: 'Burger Dakar', price: 4500, category: 'main' },
-      { id: 'sandwich', name: 'Sandwich Dibiterie', price: 3500, category: 'main' },
-      { id: 'fries', name: 'Frites Maison', price: 2000, category: 'side' },
-      { id: 'soda', name: 'Soda Local', price: 1500, category: 'drink' },
-      { id: 'combo', name: 'Menu Complet', price: 6500, category: 'combo' }
-    ]
-  },
-  {
-    id: 'barbershop',
-    name: 'Coiffure',
-    icon: Scissors,
-    color: 'bg-purple-600',
-    items: [
-      { id: 'cut', name: 'Coupe Classique', price: 3000, category: 'cut' },
-      { id: 'modern-cut', name: 'Coupe Moderne', price: 4000, category: 'cut' },
-      { id: 'beard', name: 'Taille Barbe', price: 2000, category: 'beard' },
-      { id: 'combo', name: 'Coupe + Barbe', price: 4500, category: 'combo' },
-      { id: 'treatment', name: 'Soin Capillaire', price: 5000, category: 'treatment' }
-    ]
-  }
+// Service metadata (icons and colors)
+const serviceMetadata = [
+  { id: 'car-wash', name: 'Lavage Auto', icon: Car, color: 'bg-blue-600' },
+  { id: 'restaurant', name: 'Restaurant', icon: Utensils, color: 'bg-amber-600' },
+  { id: 'fast-food', name: 'Fast Food', icon: Coffee, color: 'bg-orange-600' },
+  { id: 'barbershop', name: 'Coiffure', icon: Scissors, color: 'bg-purple-600' }
 ];
+
+// Load services dynamically from MenuManager
+const loadServicesWithItems = () => {
+  return serviceMetadata.map(meta => {
+    const menuItems = MenuManager.getMenuItemsByService(meta.id);
+    return {
+      ...meta,
+      items: menuItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        category: item.category
+      }))
+    };
+  });
+};
 
 // Generate QR code data for transaction
 const generateQRCode = (transaction: Transaction): string => {
@@ -184,6 +154,7 @@ export default function CashierPage() {
   });
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [services, setServices] = useState<any[]>([]);
 
   useEffect(() => {
     // Load employee session
@@ -228,6 +199,19 @@ export default function CashierPage() {
 
     // Load all customers (registered users + mock customers)
     setAllCustomers(loadAllCustomers());
+
+    // Load services with items from MenuManager
+    setServices(loadServicesWithItems());
+
+    // Listen for menu updates from admin dashboard
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'breeze_menu_items') {
+        setServices(loadServicesWithItems());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [router]);
 
   const handleServiceSelection = (serviceId: string) => {
@@ -619,7 +603,7 @@ export default function CashierPage() {
                 Produits & Services
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {currentService?.items.map((item) => (
+                {currentService?.items.map((item: any) => (
                   <motion.button
                     key={item.id}
                     onClick={() => addItemToOrder(item)}
